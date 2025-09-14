@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>时区零点显示</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>最近过 0 点的时区 & 即将过 0 点的时区</h1>
+  <div id="info">
+    <div class="zone-block">
+      <h2>最近过 0 点的时区</h2>
+      <p id="lastZone"></p>
+    </div>
+    <div class="zone-block">
+      <h2>下一个即将过 0 点的时区</h2>
+      <p id="nextZone"></p>
+    </div>
+  </div>
+
+  <script>
+    // 时区和中文名称映射
+    const timeZoneNames = {
+      "UTC": "协调世界时",
+      "Europe/London": "英国/伦敦",
+      "Europe/Berlin": "德国/柏林",
+      "Europe/Moscow": "俄罗斯/莫斯科",
+      "Asia/Dubai": "阿联酋/迪拜",
+      "Asia/Kabul": "阿富汗/喀布尔",
+      "Asia/Karachi": "巴基斯坦/卡拉奇",
+      "Asia/Kolkata": "印度/加尔各答（孟买/新德里）",
+      "Asia/Kathmandu": "尼泊尔/加德满都",
+      "Asia/Dhaka": "孟加拉/达卡",
+      "Asia/Yangon": "缅甸/仰光",
+      "Asia/Bangkok": "泰国/曼谷",
+      "Asia/Shanghai": "中国/上海（北京时间）",
+      "Asia/Tokyo": "日本/东京",
+      "Australia/Adelaide": "澳大利亚/阿德莱德",
+      "Australia/Darwin": "澳大利亚/达尔文",
+      "Australia/Sydney": "澳大利亚/悉尼",
+      "Pacific/Guadalcanal": "所罗门群岛/瓜达尔卡纳尔",
+      "Pacific/Auckland": "新西兰/奥克兰",
+      "Pacific/Chatham": "新西兰/查塔姆群岛",
+      "Pacific/Tongatapu": "汤加/汤加塔布岛",
+      "Pacific/Kiritimati": "基里巴斯/圣诞岛",
+      "America/St_Johns": "加拿大/圣约翰斯",
+      "America/Halifax": "加拿大/哈利法克斯",
+      "America/New_York": "美国/纽约",
+      "America/Chicago": "美国/芝加哥",
+      "America/Denver": "美国/丹佛",
+      "America/Phoenix": "美国/凤凰城",
+      "America/Los_Angeles": "美国/洛杉矶",
+      "America/Anchorage": "美国/安克雷奇",
+      "Pacific/Honolulu": "美国/檀香山",
+      "America/Sao_Paulo": "巴西/圣保罗",
+      "America/Buenos_Aires": "阿根廷/布宜诺斯艾利斯",
+      "Atlantic/Azores": "葡萄牙/亚速尔群岛",
+      "Africa/Nairobi": "肯尼亚/内罗毕",
+      "Africa/Cairo": "埃及/开罗",
+      "Africa/Lagos": "尼日利亚/拉各斯",
+      "Asia/Tehran": "伊朗/德黑兰"
+    };
+
+    const timeZones = Object.keys(timeZoneNames);
+
+    function getCurrentTimes() {
+      const now = new Date();
+      let zoneTimes = timeZones.map(tz => {
+        let formatter = new Intl.DateTimeFormat("zh-CN", {
+          timeZone: tz,
+          hour: "2-digit", minute: "2-digit", second: "2-digit",
+          hour12: false
+        });
+        let timeStr = formatter.format(now);
+        let [hour, minute, second] = timeStr.split(":").map(Number);
+        return { tz, nameCN: timeZoneNames[tz], hour, minute, second, timeStr };
+      });
+
+      // 计算距离零点的差值
+      let withDiff = zoneTimes.map(z => {
+        let secondsSinceMidnight = z.hour * 3600 + z.minute * 60 + z.second;
+        let secondsToMidnight = 86400 - secondsSinceMidnight;
+        return { ...z, secondsSinceMidnight, secondsToMidnight };
+      });
+
+      // 最近过零点
+      let lastZone = withDiff.reduce((a, b) =>
+        a.secondsSinceMidnight < b.secondsSinceMidnight ? a : b
+      );
+
+      // 下一个即将过零点
+      let nextZone = withDiff.reduce((a, b) =>
+        a.secondsToMidnight < b.secondsToMidnight ? a : b
+      );
+
+      document.getElementById("lastZone").innerText =
+        `${lastZone.nameCN} (${lastZone.tz})：${lastZone.timeStr}`;
+      document.getElementById("nextZone").innerText =
+        `${nextZone.nameCN} (${nextZone.tz})：${nextZone.timeStr}`;
+    }
+
+    getCurrentTimes();
+    setInterval(getCurrentTimes, 1000);
+  </script>
+</body>
+</html>
