@@ -31,12 +31,10 @@
   </table>
 
   <script>
-    // === 世界38个标准时区（UTC-12 到 UTC+14，含 15/30/45分钟） ===
+    // === 世界主要时区，苹果兼容并增加 Rikitea/塔伊奥哈/努克/蓬塔德尔加达 ===
     const timeZones = [
-      { id: "Etc/GMT+12", nameCN: "贝克岛（UTC-12）" },
-      { id: "Pacific/Niue", nameCN: "纽埃（UTC-11）" },
-      { id: "Pacific/Honolulu", nameCN: "夏威夷/檀香山（UTC-10）" },
-      { id: "Pacific/Marquesas", nameCN: "马克萨斯群岛（UTC-9:30）" },
+      { id: "Pacific/Taiohae", nameCN: "塔伊奥哈（UTC-9:30）" }, 
+      { id: "Pacific/Gambier", nameCN: "里基提亚（UTC-9:00）" },
       { id: "America/Anchorage", nameCN: "美国/安克雷奇（UTC-9）" },
       { id: "America/Los_Angeles", nameCN: "美国/洛杉矶（UTC-8）" },
       { id: "America/Denver", nameCN: "美国/丹佛（UTC-7）" },
@@ -45,8 +43,9 @@
       { id: "America/Halifax", nameCN: "加拿大/哈利法克斯（UTC-4）" },
       { id: "America/St_Johns", nameCN: "加拿大/圣约翰斯（UTC-3:30）" },
       { id: "America/Argentina/Buenos_Aires", nameCN: "阿根廷/布宜诺斯艾利斯（UTC-3）" },
+      { id: "America/Nuuk", nameCN: "努克（UTC-3/-2 夏令时）" },
       { id: "Atlantic/South_Georgia", nameCN: "南乔治亚岛（UTC-2）" },
-      { id: "Atlantic/Azores", nameCN: "葡萄牙/亚速尔群岛（UTC-1）" },
+      { id: "Atlantic/Azores", nameCN: "蓬塔德尔加达（UTC-1/0 夏令时）" },
       { id: "UTC", nameCN: "协调世界时（UTC+0）" },
       { id: "Europe/London", nameCN: "英国/伦敦（UTC+0，夏令时+1）" },
       { id: "Europe/Berlin", nameCN: "德国/柏林（UTC+1，夏令时+2）" },
@@ -126,3 +125,4 @@
   </script>
 </body>
 </html>
+
