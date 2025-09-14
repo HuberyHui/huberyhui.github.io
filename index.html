@@ -3,126 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <title>时区零点显示</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+    h1, h2 { text-align: center; }
+    #info { display: flex; justify-content: space-around; margin-top: 20px; }
+    .zone-block { background: #ffe08a; padding: 10px; border-radius: 6px; width: 45%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #ddd; }
+  </style>
 </head>
 <body>
-  <h1>最近过 0 点的时区 & 即将过 0 点的时区</h1>
-  <div id="info">
-    <div class="zone-block">
-      <h2>最近过 0 点的时区</h2>
-      <p id="lastZone"></p>
-    </div>
-    <div class="zone-block">
-      <h2>下一个即将过 0 点的时区</h2>
-      <p id="nextZone"></p>
-    </div>
+<h1>最近过 0 点的时区 & 即将过 0 点的时区</h1>
+
+<div id="info">
+  <div class="zone-block">
+    <h2>最近过 0 点的时区</h2>
+    <p id="lastZone"></p>
   </div>
+  <div class="zone-block">
+    <h2>下一个即将过 0 点的时区</h2>
+    <p id="nextZone"></p>
+  </div>
+</div>
 
-  <h2 style="text-align:center;margin-top:40px;">🌍 全部时区当前时间</h2>
-  <table id="zonesTable">
-    <thead>
-      <tr>
-        <th>中文名称</th>
-        <th>IANA 时区ID</th>
-        <th>当前时间</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<h2>🌍 全部时区当前时间</h2>
+<table id="zonesTable">
+  <thead>
+    <tr>
+      <th>中文名称</th>
+      <th>IANA 时区ID</th>
+      <th>当前时间</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <script>
-    // === 世界主要时区，苹果兼容并增加 Rikitea/塔伊奥哈/努克/蓬塔德尔加达 ===
-    const timeZones = [
-      { id: "Pacific/Taiohae", nameCN: "塔伊奥哈（UTC-9:30）" }, 
-      { id: "Pacific/Gambier", nameCN: "里基提亚（UTC-9:00）" },
-      { id: "America/Anchorage", nameCN: "美国/安克雷奇（UTC-9）" },
-      { id: "America/Los_Angeles", nameCN: "美国/洛杉矶（UTC-8）" },
-      { id: "America/Denver", nameCN: "美国/丹佛（UTC-7）" },
-      { id: "America/Chicago", nameCN: "美国/芝加哥（UTC-6）" },
-      { id: "America/New_York", nameCN: "美国/纽约（UTC-5）" },
-      { id: "America/Halifax", nameCN: "加拿大/哈利法克斯（UTC-4）" },
-      { id: "America/St_Johns", nameCN: "加拿大/圣约翰斯（UTC-3:30）" },
-      { id: "America/Argentina/Buenos_Aires", nameCN: "阿根廷/布宜诺斯艾利斯（UTC-3）" },
-      { id: "America/Nuuk", nameCN: "努克（UTC-3/-2 夏令时）" },
-      { id: "Atlantic/South_Georgia", nameCN: "南乔治亚岛（UTC-2）" },
-      { id: "Atlantic/Azores", nameCN: "蓬塔德尔加达（UTC-1/0 夏令时）" },
-      { id: "UTC", nameCN: "协调世界时（UTC+0）" },
-      { id: "Europe/London", nameCN: "英国/伦敦（UTC+0，夏令时+1）" },
-      { id: "Europe/Berlin", nameCN: "德国/柏林（UTC+1，夏令时+2）" },
-      { id: "Europe/Moscow", nameCN: "俄罗斯/莫斯科（UTC+3）" },
-      { id: "Asia/Tehran", nameCN: "伊朗/德黑兰（UTC+3:30）" },
-      { id: "Asia/Dubai", nameCN: "阿联酋/迪拜（UTC+4）" },
-      { id: "Asia/Kabul", nameCN: "阿富汗/喀布尔（UTC+4:30）" },
-      { id: "Asia/Karachi", nameCN: "巴基斯坦/卡拉奇（UTC+5）" },
-      { id: "Asia/Kolkata", nameCN: "印度/加尔各答（UTC+5:30）" },
-      { id: "Asia/Kathmandu", nameCN: "尼泊尔/加德满都（UTC+5:45）" },
-      { id: "Asia/Dhaka", nameCN: "孟加拉/达卡（UTC+6）" },
-      { id: "Asia/Yangon", nameCN: "缅甸/仰光（UTC+6:30）" },
-      { id: "Asia/Bangkok", nameCN: "泰国/曼谷（UTC+7）" },
-      { id: "Asia/Shanghai", nameCN: "中国/上海（北京时间，UTC+8）" },
-      { id: "Australia/Eucla", nameCN: "澳大利亚/尤克拉（UTC+8:45）" },
-      { id: "Asia/Tokyo", nameCN: "日本/东京（UTC+9）" },
-      { id: "Australia/Adelaide", nameCN: "澳大利亚/阿德莱德（UTC+9:30）" },
-      { id: "Australia/Darwin", nameCN: "澳大利亚/达尔文（UTC+9:30）" },
-      { id: "Australia/Sydney", nameCN: "澳大利亚/悉尼（UTC+10）" },
-      { id: "Australia/Lord_Howe", nameCN: "澳大利亚/豪勋爵岛（UTC+10:30，夏令时+11）" },
-      { id: "Pacific/Guadalcanal", nameCN: "所罗门群岛/瓜达尔卡纳尔（UTC+11）" },
-      { id: "Pacific/Auckland", nameCN: "新西兰/奥克兰（UTC+12）" },
-      { id: "Pacific/Chatham", nameCN: "新西兰/查塔姆群岛（UTC+12:45）" },
-      { id: "Pacific/Tongatapu", nameCN: "汤加/汤加塔布岛（UTC+13）" },
-      { id: "Pacific/Kiritimati", nameCN: "基里巴斯/圣诞岛（UTC+14）" }
-    ];
+<script>
+const timeZones = [
+  { id: "Pacific/Taiohae", nameCN: "塔伊奥哈（UTC-9:30）" },
+  { id: "Pacific/Gambier", nameCN: "里基提亚（UTC-9:00）" },
+  { id: "America/Anchorage", nameCN: "美国/安克雷奇（UTC-9）" },
+  { id: "America/Los_Angeles", nameCN: "美国/洛杉矶（UTC-8）" },
+  { id: "America/Denver", nameCN: "美国/丹佛（UTC-7）" },
+  { id: "America/Chicago", nameCN: "美国/芝加哥（UTC-6）" },
+  { id: "America/New_York", nameCN: "美国/纽约（UTC-5）" },
+  { id: "America/Halifax", nameCN: "加拿大/哈利法克斯（UTC-4）" },
+  { id: "America/St_Johns", nameCN: "加拿大/圣约翰斯（UTC-3:30）" },
+  { id: "America/Argentina/Buenos_Aires", nameCN: "阿根廷/布宜诺斯艾利斯（UTC-3）" },
+  { id: "America/Nuuk", nameCN: "努克（UTC-3/-2 夏令时）" },
+  { id: "Atlantic/South_Georgia", nameCN: "南乔治亚岛（UTC-2）" },
+  { id: "Atlantic/Azores", nameCN: "蓬塔德尔加达（UTC-1/0 夏令时）" },
+  { id: "UTC", nameCN: "协调世界时（UTC+0）" },
+  { id: "Europe/London", nameCN: "英国/伦敦（UTC+0，夏令时+1）" },
+  { id: "Europe/Berlin", nameCN: "德国/柏林（UTC+1，夏令时+2）" },
+  { id: "Europe/Moscow", nameCN: "俄罗斯/莫斯科（UTC+3）" },
+  { id: "Asia/Tehran", nameCN: "伊朗/德黑兰（UTC+3:30）" },
+  { id: "Asia/Dubai", nameCN: "阿联酋/迪拜（UTC+4）" },
+  { id: "Asia/Kabul", nameCN: "阿富汗/喀布尔（UTC+4:30）" },
+  { id: "Asia/Karachi", nameCN: "巴基斯坦/卡拉奇（UTC+5）" },
+  { id: "Asia/Kolkata", nameCN: "印度/加尔各答（UTC+5:30）" },
+  { id: "Asia/Kathmandu", nameCN: "尼泊尔/加德满都（UTC+5:45）" },
+  { id: "Asia/Dhaka", nameCN: "孟加拉/达卡（UTC+6）" },
+  { id: "Asia/Yangon", nameCN: "缅甸/仰光（UTC+6:30）" },
+  { id: "Asia/Bangkok", nameCN: "泰国/曼谷（UTC+7）" },
+  { id: "Asia/Shanghai", nameCN: "中国/上海（北京时间，UTC+8）" },
+  { id: "Australia/Eucla", nameCN: "澳大利亚/尤克拉（UTC+8:45）" },
+  { id: "Asia/Tokyo", nameCN: "日本/东京（UTC+9）" },
+  { id: "Australia/Adelaide", nameCN: "澳大利亚/阿德莱德（UTC+9:30）" },
+  { id: "Australia/Darwin", nameCN: "澳大利亚/达尔文（UTC+9:30）" },
+  { id: "Australia/Sydney", nameCN: "澳大利亚/悉尼（UTC+10）" },
+  { id: "Australia/Lord_Howe", nameCN: "澳大利亚/豪勋爵岛（UTC+10:30，夏令时+11）" },
+  { id: "Pacific/Guadalcanal", nameCN: "所罗门群岛/瓜达尔卡纳尔（UTC+11）" },
+  { id: "Pacific/Auckland", nameCN: "新西兰/奥克兰（UTC+12）" },
+  { id: "Pacific/Chatham", nameCN: "新西兰/查塔姆群岛（UTC+12:45）" },
+  { id: "Pacific/Tongatapu", nameCN: "汤加/汤加塔布岛（UTC+13）" },
+  { id: "Pacific/Kiritimati", nameCN: "基里巴斯/圣诞岛（UTC+14）" }
+];
 
-    function getCurrentTimes() {
-      const now = new Date();
+function updateTimes() {
+  const now = new Date();
+  const tbody = document.querySelector("#zonesTable tbody");
+  tbody.innerHTML = "";
 
-      // 生成时区时间数据
-      let zoneTimes = timeZones.map(z => {
-        let formatter = new Intl.DateTimeFormat("zh-CN", {
-          timeZone: z.id,
-          hour: "2-digit", minute: "2-digit", second: "2-digit",
-          hour12: false
-        });
-        let timeStr = formatter.format(now);
-        let [hour, minute, second] = timeStr.split(":").map(Number);
-        return { ...z, hour, minute, second, timeStr };
-      });
+  let lastPast = null;
+  let nextZero = null;
+  let minPastDiff = -1;
+  let minFutureDiff = 86400;
 
-      // 计算距离零点
-      let withDiff = zoneTimes.map(z => {
-        let secondsSinceMidnight = z.hour * 3600 + z.minute * 60 + z.second;
-        let secondsToMidnight = 86400 - secondsSinceMidnight;
-        return { ...z, secondsSinceMidnight, secondsToMidnight };
-      });
-
-      // 最近过零点
-      let lastZone = withDiff.reduce((a, b) =>
-        a.secondsSinceMidnight < b.secondsSinceMidnight ? a : b
-      );
-
-      // 下一个零点
-      let nextZone = withDiff.reduce((a, b) =>
-        a.secondsToMidnight < b.secondsToMidnight ? a : b
-      );
-
-      document.getElementById("lastZone").innerText =
-        `${lastZone.nameCN} (${lastZone.id})：${lastZone.timeStr}`;
-      document.getElementById("nextZone").innerText =
-        `${nextZone.nameCN} (${nextZone.id})：${nextZone.timeStr}`;
-
-      // 更新表格
-      const tbody = document.querySelector("#zonesTable tbody");
-      tbody.innerHTML = "";
-      zoneTimes.forEach(z => {
-        let tr = document.createElement("tr");
-        tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${z.timeStr}</td>`;
-        tbody.appendChild(tr);
-      });
+  timeZones.forEach(z => {
+    let timeStr;
+    try {
+      timeStr = new Intl.DateTimeFormat("zh-CN", {
+        timeZone: z.id,
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }).format(now);
+    } catch(e) {
+      timeStr = "不支持";
     }
 
-    getCurrentTimes();
-    setInterval(getCurrentTimes, 1000);
-  </script>
+    let [hour, minute, second] = timeStr.split(":").map(Number);
+    const secondsSinceMidnight = hour*3600 + minute*60 + second;
+    const secondsToMidnight = 86400 - secondsSinceMidnight;
+
+    // 找最近过零点
+    if(secondsSinceMidnight > 0 && (minPastDiff === -1 || secondsSinceMidnight < minPastDiff)) {
+      lastPast = { ...z, timeStr };
+      minPastDiff = secondsSinceMidnight;
+    }
+
+    // 找即将过零点
+    if(secondsToMidnight > 0 && secondsToMidnight < minFutureDiff) {
+      nextZero = { ...z, timeStr };
+      minFutureDiff = secondsToMidnight;
+    }
+
+    // 添加表格
+    let tr = document.createElement("tr");
+    tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${timeStr}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("lastZone").innerText = lastPast ? `${lastPast.nameCN} (${lastPast.id})：${lastPast.timeStr}` : "无";
+  document.getElementById("nextZone").innerText = nextZero ? `${nextZero.nameCN} (${nextZero.id})：${nextZero.timeStr}` : "无";
+}
+
+updateTimes();
+setInterval(updateTimes, 1000);
+</script>
 </body>
 </html>
 
