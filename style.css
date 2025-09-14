@@ -1,6 +1,6 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f0f4f8;
+  background: #f8fafc;
   color: #333;
   margin: 0;
   padding: 20px;
@@ -34,4 +34,30 @@ h1 {
 .zone-block p {
   font-size: 1.2em;
   font-weight: bold;
+}
+
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 90%;
+  max-width: 1000px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 10px 15px;
+  text-align: center;
+}
+
+table th {
+  background: #0077cc;
+  color: white;
+}
+
+table tr:nth-child(even) {
+  background: #f3f7fb;
 }
