@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>时区零点显示</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
-    h1, h2 { text-align: center; }
-    #info { display: flex; justify-content: space-around; margin-top: 20px; }
-    .zone-block { background: #ffe08a; padding: 10px; border-radius: 6px; width: 45%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 40px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #ddd; }
-  </style>
+<meta charset="UTF-8">
+<title>时区零点显示</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+  h1, h2 { text-align: center; }
+  #info { display: flex; justify-content: space-around; margin-top: 20px; }
+  .zone-block { background: #ffe08a; padding: 10px; border-radius: 6px; width: 45%; }
+  table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  th { background: #ddd; }
+</style>
 </head>
 <body>
 <h1>最近过 0 点的时区 & 即将过 0 点的时区</h1>
-
 <div id="info">
   <div class="zone-block">
     <h2>最近过 0 点的时区</h2>
@@ -86,44 +85,45 @@ function updateTimes() {
   const tbody = document.querySelector("#zonesTable tbody");
   tbody.innerHTML = "";
 
+  // 给每个时区计算当前 UTC 偏移（秒）
+  const zonesWithOffset = timeZones.map(z => {
+    let dt;
+    try {
+      dt = new Date(now.toLocaleString("en-US", { timeZone: z.id }));
+    } catch(e) {
+      dt = now; // 备用
+    }
+    const offsetSec = (dt.getTime() - now.getTime()) / 1000;
+    const timeStr = dt.toLocaleTimeString("zh-CN", { hour12:false });
+    return { ...z, dt, offsetSec, timeStr };
+  });
+
+  // 按 UTC 偏移排序
+  zonesWithOffset.sort((a,b) => a.offsetSec - b.offsetSec);
+
   let lastPast = null;
   let nextZero = null;
   let minPastDiff = -1;
   let minFutureDiff = 86400;
 
-  timeZones.forEach(z => {
-    let timeStr;
-    try {
-      timeStr = new Intl.DateTimeFormat("zh-CN", {
-        timeZone: z.id,
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-      }).format(now);
-    } catch(e) {
-      timeStr = "不支持";
-    }
-
-    let [hour, minute, second] = timeStr.split(":").map(Number);
+  zonesWithOffset.forEach(z => {
+    const hour = z.dt.getHours();
+    const minute = z.dt.getMinutes();
+    const second = z.dt.getSeconds();
     const secondsSinceMidnight = hour*3600 + minute*60 + second;
     const secondsToMidnight = 86400 - secondsSinceMidnight;
 
-    // 找最近过零点
-    if(secondsSinceMidnight > 0 && (minPastDiff === -1 || secondsSinceMidnight < minPastDiff)) {
-      lastPast = { ...z, timeStr };
+    if(secondsSinceMidnight > 0 && (minPastDiff === -1 || secondsSinceMidnight < minPastDiff)){
+      lastPast = z;
       minPastDiff = secondsSinceMidnight;
     }
-
-    // 找即将过零点
-    if(secondsToMidnight > 0 && secondsToMidnight < minFutureDiff) {
-      nextZero = { ...z, timeStr };
+    if(secondsToMidnight > 0 && secondsToMidnight < minFutureDiff){
+      nextZero = z;
       minFutureDiff = secondsToMidnight;
     }
 
-    // 添加表格
-    let tr = document.createElement("tr");
-    tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${timeStr}</td>`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${z.timeStr}</td>`;
     tbody.appendChild(tr);
   });
 
@@ -132,7 +132,7 @@ function updateTimes() {
 }
 
 updateTimes();
-setInterval(updateTimes, 1000);
+setInterval(updateTimes,1000);
 </script>
 </body>
 </html>
