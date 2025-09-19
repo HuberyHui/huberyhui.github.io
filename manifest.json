@@ -1,11 +1,12 @@
 {
   "name": "世界时区零点提醒",
   "short_name": "时区提醒",
-  "start_url": "/0amtimezone/",
-  "scope": "/0amtimezone/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0b74de",
+  "description": "显示全球各时区时间，并在零点提醒。",
   "icons": [
     {
       "src": "icon-192.png",
@@ -19,4 +20,5 @@
     }
   ]
 }
+
 
