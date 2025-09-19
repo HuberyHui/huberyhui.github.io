@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b74de">
 <meta charset="UTF-8">
 <title>时区零点显示</title>
 <style>
@@ -139,6 +141,14 @@ function updateTimes() {
 updateTimes();
 setInterval(updateTimes,1000);
 </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("Service Worker 注册成功"))
+    .catch(err => console.error("Service Worker 注册失败", err));
+}
+</script>
+
 </body>
 </html>
 
