@@ -2,28 +2,28 @@
 <html lang="zh-CN">
 <head>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "3f056581-0c00-4ccf-b823-7025c05b9f44",
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "3f056581-0c00-4ccf-b823-7025c05b9f44",
+      });
     });
-  });
-</script>
+  </script>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b74de">
-<meta charset="UTF-8">
-<title>时区零点显示</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
-  h1, h2 { text-align: center; }
-  #info { display: flex; justify-content: space-around; margin-top: 20px; }
-  .zone-block { background: #ffe08a; padding: 10px; border-radius: 6px; width: 45%; }
-  table { width: 100%; border-collapse: collapse; margin-top: 40px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  th { background: #ddd; }
-</style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b74de">
+  <meta charset="UTF-8">
+  <title>时区零点显示</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+    h1, h2 { text-align: center; }
+    #info { display: flex; justify-content: space-around; margin-top: 20px; }
+    .zone-block { background: #ffe08a; padding: 10px; border-radius: 6px; width: 45%; font-size: 18px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #ddd; }
+  </style>
 </head>
 <body>
 <h1>最近过 0 点的时区 & 即将过 0 点的时区</h1>
@@ -39,11 +39,6 @@
 </div>
 
 <h2>🌍 全部时区当前时间</h2>
-<!-- 把这个放在 body 内、表格上方或 info 区域附近 -->
-<div id="globeWrap" title="旋转地球（装饰）">
-  <div id="globe" class="globe-rotate" aria-hidden="true"></div>
-</div>
-
 <table id="zonesTable">
   <thead>
     <tr>
@@ -92,7 +87,7 @@ const timeZones = [
   { id: "Australia/Lord_Howe", nameCN: "澳大利亚/豪勋爵岛（UTC+10:30，夏令时+11）" },
   { id: "Pacific/Guadalcanal", nameCN: "所罗门群岛/瓜达尔卡纳尔（UTC+11）" },
   { id: "Pacific/Fiji", nameCN: "斐济/苏瓦（UTC+12，夏令时+13）" },
-  { id: "Pacific/Auckland", nameCN: "新西兰/奥克兰（UTC+12）" },
+  { id: "Pacific/Auckland", nameCN: "新西兰/奥克兰（UTC+12/13）" },
   { id: "Pacific/Chatham", nameCN: "新西兰/查塔姆群岛（UTC+12:45）" },
   { id: "Pacific/Tongatapu", nameCN: "汤加/汤加塔布岛（UTC+13）" },
   { id: "Pacific/Kiritimati", nameCN: "基里巴斯/圣诞岛（UTC+14）" }
@@ -103,63 +98,67 @@ function updateTimes() {
   const tbody = document.querySelector("#zonesTable tbody");
   tbody.innerHTML = "";
 
-  // 给每个时区计算当前 UTC 偏移（秒）
   const zonesWithOffset = timeZones.map(z => {
-    let dt;
-    try {
-      dt = new Date(now.toLocaleString("en-US", { timeZone: z.id }));
-    } catch(e) {
-      dt = now; // 备用
-    }
-    const offsetSec = (dt.getTime() - now.getTime()) / 1000;
-    const timeStr = dt.toLocaleTimeString("zh-CN", { hour12:false });
-    return { ...z, dt, offsetSec, timeStr };
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: z.id,
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    const parts = formatter.formatToParts(now);
+    const h = parseInt(parts.find(p => p.type === "hour").value);
+    const m = parseInt(parts.find(p => p.type === "minute").value);
+    const s = parseInt(parts.find(p => p.type === "second").value);
+
+    // 构造时区本地时间
+    const timeStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+
+    return { ...z, hour: h, minute: m, second: s, timeStr };
   });
 
-  // 按 UTC 偏移排序
-  zonesWithOffset.sort((a,b) => a.offsetSec - b.offsetSec);
-
-  let lastPast = null;
-  let nextZero = null;
-  let minPastDiff = -1;
-  let minFutureDiff = 86400;
-
   zonesWithOffset.forEach(z => {
-    const hour = z.dt.getHours();
-    const minute = z.dt.getMinutes();
-    const second = z.dt.getSeconds();
-    const secondsSinceMidnight = hour*3600 + minute*60 + second;
-    const secondsToMidnight = 86400 - secondsSinceMidnight;
-
-    if(secondsSinceMidnight > 0 && (minPastDiff === -1 || secondsSinceMidnight < minPastDiff)){
-      lastPast = z;
-      minPastDiff = secondsSinceMidnight;
-    }
-    if(secondsToMidnight > 0 && secondsToMidnight < minFutureDiff){
-      nextZero = z;
-      minFutureDiff = secondsToMidnight;
-    }
-
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${z.timeStr}</td>`;
     tbody.appendChild(tr);
   });
 
-  document.getElementById("lastZone").innerText = lastPast ? `${lastPast.nameCN} (${lastPast.id})：${lastPast.timeStr}` : "无";
-  document.getElementById("nextZone").innerText = nextZero ? `${nextZero.nameCN} (${nextZero.id})：${nextZero.timeStr}` : "无";
+  // 最近过 0 点 & 下一个即将过 0 点
+  let lastZone = null;
+  let nextZone = null;
+  let minPast = 86401;
+  let minFuture = 86401;
+
+  zonesWithOffset.forEach(z => {
+    const secondsSinceMidnight = z.hour * 3600 + z.minute * 60 + z.second;
+    const secondsToMidnight = 86400 - secondsSinceMidnight;
+
+    if (secondsSinceMidnight > 0 && secondsSinceMidnight < minPast) {
+      lastZone = z;
+      minPast = secondsSinceMidnight;
+    }
+    if (secondsToMidnight > 0 && secondsToMidnight < minFuture) {
+      nextZone = z;
+      minFuture = secondsToMidnight;
+    }
+  });
+
+  document.getElementById("lastZone").innerText = lastZone ? `${lastZone.nameCN} (${lastZone.id})：${lastZone.timeStr}` : "无";
+  document.getElementById("nextZone").innerText = nextZone ? `${nextZone.nameCN} (${nextZone.id})：${nextZone.timeStr}` : "无";
 }
 
 updateTimes();
-setInterval(updateTimes,1000);
+setInterval(updateTimes, 1000);
 </script>
-  <script>
+
+<script>
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
+  navigator.serviceWorker.register("/service-worker.js")
     .then(() => console.log("Service Worker 注册成功"))
     .catch(err => console.error("Service Worker 注册失败", err));
 }
 </script>
-
 </body>
 </html>
+
 
