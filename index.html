@@ -1,64 +1,162 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "3f056581-0c00-4ccf-b823-7025c05b9f44",
+      });
+    });
+  </script>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b74de">
   <meta charset="UTF-8">
-  <title>Fiji 测试</title>
+  <title>时区零点显示</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+    h1, h2 { text-align: center; }
+    #info { display: flex; justify-content: space-around; margin-top: 20px; }
+    .zone-block { background: #ffe08a; padding: 10px; border-radius: 6px; width: 45%; font-size: 18px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 40px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #eee; }
+    th { background: #ddd; }
   </style>
 </head>
 <body>
-  <h1>测试 Fiji 是否显示</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>中文名称</th>
-        <th>IANA 时区ID</th>
-        <th>当前时间</th>
-      </tr>
-    </thead>
-    <tbody id="zonesTable"></tbody>
-  </table>
+<h1>最近过 0 点的时区 & 即将过 0 点的时区</h1>
+<div id="info">
+  <div class="zone-block">
+    <h2>最近过 0 点的时区</h2>
+    <p id="lastZone"></p>
+  </div>
+  <div class="zone-block">
+    <h2>下一个即将过 0 点的时区</h2>
+    <p id="nextZone"></p>
+  </div>
+</div>
+
+<h2>🌍 全部时区当前时间</h2>
+<table id="zonesTable">
+  <thead>
+    <tr>
+      <th>中文名称</th>
+      <th>IANA 时区ID</th>
+      <th>当前时间</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
 const timeZones = [
+  { id: "Pacific/Marquesas", nameCN: "塔伊奥哈（UTC-9:30）" },
+  { id: "Pacific/Gambier", nameCN: "里基提亚（UTC-9:00）" },
+  { id: "America/Anchorage", nameCN: "美国/安克雷奇（UTC-9）" },
+  { id: "America/Los_Angeles", nameCN: "美国/洛杉矶（UTC-8）" },
+  { id: "America/Denver", nameCN: "美国/丹佛（UTC-7）" },
+  { id: "America/Chicago", nameCN: "美国/芝加哥（UTC-6）" },
+  { id: "America/New_York", nameCN: "美国/纽约（UTC-5）" },
+  { id: "America/Halifax", nameCN: "加拿大/哈利法克斯（UTC-4）" },
+  { id: "America/St_Johns", nameCN: "加拿大/圣约翰斯（UTC-3:30）" },
+  { id: "America/Argentina/Buenos_Aires", nameCN: "阿根廷/布宜诺斯艾利斯（UTC-3）" },
+  { id: "America/Nuuk", nameCN: "努克（UTC-3/-2 夏令时）" },
+  { id: "Atlantic/South_Georgia", nameCN: "南乔治亚岛（UTC-2）" },
+  { id: "Atlantic/Azores", nameCN: "蓬塔德尔加达（UTC-1/0 夏令时）" },
+  { id: "UTC", nameCN: "协调世界时（UTC+0）" },
+  { id: "Europe/London", nameCN: "英国/伦敦（UTC+0，夏令时+1）" },
+  { id: "Europe/Berlin", nameCN: "德国/柏林（UTC+1，夏令时+2）" },
+  { id: "Europe/Moscow", nameCN: "俄罗斯/莫斯科（UTC+3）" },
+  { id: "Asia/Tehran", nameCN: "伊朗/德黑兰（UTC+3:30）" },
+  { id: "Asia/Dubai", nameCN: "阿联酋/迪拜（UTC+4）" },
+  { id: "Asia/Kabul", nameCN: "阿富汗/喀布尔（UTC+4:30）" },
+  { id: "Asia/Karachi", nameCN: "巴基斯坦/卡拉奇（UTC+5）" },
+  { id: "Asia/Kolkata", nameCN: "印度/加尔各答（UTC+5:30）" },
+  { id: "Asia/Kathmandu", nameCN: "尼泊尔/加德满都（UTC+5:45）" },
+  { id: "Asia/Dhaka", nameCN: "孟加拉/达卡（UTC+6）" },
+  { id: "Asia/Yangon", nameCN: "缅甸/仰光（UTC+6:30）" },
+  { id: "Asia/Bangkok", nameCN: "泰国/曼谷（UTC+7）" },
+  { id: "Asia/Shanghai", nameCN: "中国/上海（北京时间，UTC+8）" },
+  { id: "Australia/Eucla", nameCN: "澳大利亚/尤克拉（UTC+8:45）" },
+  { id: "Asia/Tokyo", nameCN: "日本/东京（UTC+9）" },
+  { id: "Australia/Adelaide", nameCN: "澳大利亚/阿德莱德（UTC+9:30）" },
+  { id: "Australia/Darwin", nameCN: "澳大利亚/达尔文（UTC+9:30）" },
+  { id: "Australia/Sydney", nameCN: "澳大利亚/悉尼（UTC+10）" },
+  { id: "Australia/Lord_Howe", nameCN: "澳大利亚/豪勋爵岛（UTC+10:30，夏令时+11）" },
+  { id: "Pacific/Guadalcanal", nameCN: "所罗门群岛/瓜达尔卡纳尔（UTC+11）" },
   { id: "Pacific/Fiji", nameCN: "斐济/苏瓦（UTC+12，夏令时+13）" },
-  { id: "Pacific/Auckland", nameCN: "新西兰/奥克兰（UTC+12/13）" }
+  { id: "Pacific/Auckland", nameCN: "新西兰/奥克兰（UTC+12/13）" },
+  { id: "Pacific/Chatham", nameCN: "新西兰/查塔姆群岛（UTC+12:45）" },
+  { id: "Pacific/Tongatapu", nameCN: "汤加/汤加塔布岛（UTC+13）" },
+  { id: "Pacific/Kiritimati", nameCN: "基里巴斯/圣诞岛（UTC+14）" }
 ];
 
 function updateTimes() {
   const now = new Date();
-  const tbody = document.querySelector("#zonesTable");
+  const tbody = document.querySelector("#zonesTable tbody");
   tbody.innerHTML = "";
 
-  timeZones.forEach(z => {
-    let timeStr;
-    try {
-      timeStr = new Intl.DateTimeFormat("zh-CN", {
-        timeZone: z.id,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false
-      }).format(now);
-    } catch (e) {
-      timeStr = "❌ 不支持";
-    }
+  const zonesWithOffset = timeZones.map(z => {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: z.id,
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    const parts = formatter.formatToParts(now);
+    const h = parseInt(parts.find(p => p.type === "hour").value);
+    const m = parseInt(parts.find(p => p.type === "minute").value);
+    const s = parseInt(parts.find(p => p.type === "second").value);
 
-    console.log(z.id, timeStr); // 调试用
+    // 构造时区本地时间
+    const timeStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+
+    return { ...z, hour: h, minute: m, second: s, timeStr };
+  });
+
+  zonesWithOffset.forEach(z => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${timeStr}</td>`;
+    tr.innerHTML = `<td>${z.nameCN}</td><td>${z.id}</td><td>${z.timeStr}</td>`;
     tbody.appendChild(tr);
   });
+
+  // 最近过 0 点 & 下一个即将过 0 点
+  let lastZone = null;
+  let nextZone = null;
+  let minPast = 86401;
+  let minFuture = 86401;
+
+  zonesWithOffset.forEach(z => {
+    const secondsSinceMidnight = z.hour * 3600 + z.minute * 60 + z.second;
+    const secondsToMidnight = 86400 - secondsSinceMidnight;
+
+    if (secondsSinceMidnight > 0 && secondsSinceMidnight < minPast) {
+      lastZone = z;
+      minPast = secondsSinceMidnight;
+    }
+    if (secondsToMidnight > 0 && secondsToMidnight < minFuture) {
+      nextZone = z;
+      minFuture = secondsToMidnight;
+    }
+  });
+
+  document.getElementById("lastZone").innerText = lastZone ? `${lastZone.nameCN} (${lastZone.id})：${lastZone.timeStr}` : "无";
+  document.getElementById("nextZone").innerText = nextZone ? `${nextZone.nameCN} (${nextZone.id})：${nextZone.timeStr}` : "无";
 }
 
 updateTimes();
 setInterval(updateTimes, 1000);
 </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("Service Worker 注册成功"))
+    .catch(err => console.error("Service Worker 注册失败", err));
+}
+</script>
 </body>
 </html>
-
-
